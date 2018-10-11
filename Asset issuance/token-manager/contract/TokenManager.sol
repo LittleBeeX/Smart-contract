@@ -1,9 +1,3 @@
-/*
- * SPDX-License-Identitifer:    GPL-3.0-or-later
- */
-
-/* solium-disable function-order */
-
 pragma solidity 0.4.24;
 
 import "./common/LittleBeeXApp.sol";
