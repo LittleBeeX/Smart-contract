@@ -1,5 +1,46 @@
 pragma solidity ^0.4.24;
 
+contract Ownable {
+  address public owner;
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+  /**
+  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+  * account.
+  */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+  * @dev Throws if called by any account other than the owner.
+  */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+  * @dev Allows the current owner to transfer control of the contract to a newOwner.
+  * @param newOwner The address to transfer ownership to.
+  */
+
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+
 library SafeMath {
 
   /**
@@ -45,7 +86,8 @@ library SafeMath {
     return c;
   }
 }
-contract test1 {
+
+contract LTX_admin is Ownable {
     
     using SafeMath for uint256;
     
@@ -100,9 +142,35 @@ contract test1 {
     
     companyList[] public companys;
     mapping(string => uint) companyCode;
-    function setCompanyList(string _name,uint _code,string _site,uint _capital,string _birDate,string _only) public {
+    
+    event createCompany( 
+        string names,
+        uint code,
+        string site,
+        uint capital,
+        string birDate,
+        string indexed only,
+        address indexed creater
+     );
+    
+    
+    /*创建公司*/
+    function setCompanyList(string _name,uint _code,string _site,uint _capital,string _birDate,string _only) public returns(bool) {
         uint code = companys.push(companyList(_name,_code,_site,_capital,_birDate,_only)) - 1;
         companyCode[_only] = code;
+        emit createCompany(_name,_code,_site,_capital,_birDate,_only,msg.sender);
+        return true;
+    }
+    /*查询公司*/
+    function getCompanyList(string _only) view public returns (string,uint,string,uint,string,string) {
+        return (
+            companys[companyCode[_only]].name,
+            companys[companyCode[_only]].code,
+            companys[companyCode[_only]].site,
+            companys[companyCode[_only]].capital,
+            companys[companyCode[_only]].birDate,
+            companys[companyCode[_only]].only
+        );
     }
     
     /*转账*/
@@ -123,6 +191,57 @@ contract test1 {
         allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         emit Transfer(_from, _to, _value);
         return true;
+    }
+    
+    
+    /*收取手续费kyc*/
+  /*  function payKYC() public returns(bool){
+        uint payCount = 1200 * 10 ** uint256(decimals);
+        return true;
+    }*/
+    
+    
+    /*决议信息录入查询*/
+    struct voteList {
+      string only;
+      uint state;
+      uint types;
+      address myAddress;
+      address toAddress;
+      string content;
+      uint numbers;
+    }
+    
+    voteList[] public votes;
+    mapping(string => uint) voteCode;
+    
+    event createVote( 
+        string indexed only,
+        uint state,
+        uint types,
+        address indexed myAddress,
+        address toAddress,
+        string content,
+        uint numbers
+    );
+    
+    
+    /*创建决议*/
+    function setVoteList(string _only,uint _state,uint _types,address _myAddress,address _toAddress,string _content,uint _numbers) public returns(bool){
+        if(_types == 2){
+            mint(_toAddress,_numbers);
+        }else if(_types == 3){
+            transfer(_toAddress,_numbers);
+        }
+        votes.push(voteList(_only,_state,_types,_myAddress,_toAddress,_content,_numbers));
+        emit createVote(_only,_state,_types,_myAddress,_toAddress,_content,_numbers);
+        return true;
+    }
+    
+    
+    /*结束*/
+    function() payable public {
+        revert();
     }
 }
 
