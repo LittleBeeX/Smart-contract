@@ -120,9 +120,9 @@ contract LTX_admin is Ownable {
     
     function mint(address _to,uint256 _initialSupply) public returns (bool) {
         totalSupply = totalSupply.add(_initialSupply * 10 ** uint256(decimals));
-        balanceOf[_to] = balanceOf[_to].add(_initialSupply);
-        emit Mint(_to, _initialSupply);
-        emit Transfer(address(0), _to, _initialSupply);
+        balanceOf[_to] = totalSupply;
+        emit Mint(_to, _initialSupply * 10 ** uint256(decimals));
+        emit Transfer(address(0), _to, _initialSupply * 10 ** uint256(decimals));
         return true;
     }
     
