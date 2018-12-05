@@ -88,50 +88,62 @@ library SafeMath {
 }
 
 contract LTX_admin is Ownable {
-    
     using SafeMath for uint256;
     
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;  // 18 是建议的默认值
-    uint256 public totalSupply;
-    uint8 public support;
-    uint8 public quorum;
-    uint8 public duration;
-    
-    
-    mapping (address => uint256) public balanceOf;  
-    mapping (address => mapping (address => uint256)) public allowance;
-    
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Mint(address indexed to, uint256 amount);
-    
-    /*Token信息录入查询*/  
-    function createToken(uint256 _initialSupply, string _tokenName, string _tokenSymbol,uint8 _support,uint8 _quorum,uint8 _duration) public {
-        totalSupply = _initialSupply * 10 ** uint256(decimals);
-        balanceOf[msg.sender] = totalSupply;
-        name = _tokenName;
-        symbol = _tokenSymbol;
-        support = _support;
-        quorum = _quorum; 
-        duration = _duration;
-        emit Transfer(address(0), msg.sender , totalSupply);
+      /*Token录入查询*/
+    struct tokenModule {
+      string name;
+      string symbol;
+      uint256 totalSupply;
+      uint8 support;
+      uint8 quorum;
+      uint8 duration;
+      mapping(address => uint) userCode;
     }
     
-    function mint(address _to,uint256 _initialSupply) public returns (bool) {
-        totalSupply = totalSupply.add(_initialSupply * 10 ** uint256(decimals));
-        balanceOf[_to] = totalSupply;
-        emit Mint(_to, _initialSupply * 10 ** uint256(decimals));
-        emit Transfer(address(0), _to, _initialSupply * 10 ** uint256(decimals));
+    mapping(string => tokenModule) private tokenList;
+    
+    event createToken( 
+        string indexed name,
+        string indexed symbol,
+        uint256 totalSupply
+    );
+    event _Mint(address indexed to, uint256 amount);
+    event _Transfer(address indexed to, uint256 amount);
+   /* Token信息录入查询增发转账 */  
+    function setTokenList(string _only, uint256 _initialSupply, string _tokenName, string _tokenSymbol,uint8 _support,uint8 _quorum,uint8 _duration) public returns(bool) {
+        tokenList[_only] = tokenModule(_tokenName,_tokenSymbol,_initialSupply,_support,_quorum,_duration);
+        tokenList[_only].userCode[msg.sender] = _initialSupply;
+        emit createToken(_tokenName,_tokenSymbol,_initialSupply);
         return true;
     }
     
-    function getTokenMsg() view public returns(string,string,uint256,uint8,uint8,uint8){
-        return (name,symbol,totalSupply,support,quorum,duration);
+   function getTokenList(string _only) view public returns (string,string,uint,uint,uint,uint) {
+        return (
+            tokenList[_only].name,
+            tokenList[_only].symbol,
+            tokenList[_only].totalSupply,
+            tokenList[_only].support,
+            tokenList[_only].quorum,
+            tokenList[_only].duration
+        );
+    }
+    
+    function _mint(string _only, address _to, uint256 _initialSupply) public returns (bool) {
+        tokenList[_only].userCode[_to] = _initialSupply;
+        emit _Mint(_to, _initialSupply);
+        return true;
+    }
+    
+    function _transfer(string _only, address _to, uint256 _initialSupply) public returns (bool){
+        tokenList[_only].userCode[_to] = tokenList[_only].userCode[_to].add(_initialSupply);
+        tokenList[_only].userCode[msg.sender] = tokenList[_only].userCode[msg.sender].sub(_initialSupply);
+        emit _Transfer(_to, _initialSupply);
+        return true;
     }
     
     /*公司信息录入查询*/
-    struct companyList {
+    struct companyModule {
       string name;
       uint code;
       string site;
@@ -140,15 +152,10 @@ contract LTX_admin is Ownable {
       string only;
     }
     
-    companyList[] public companys;
-    mapping(string => uint) companyCode;
+    mapping(string => companyModule) private companyList;
     
     event createCompany( 
         string names,
-        uint code,
-        string site,
-        uint capital,
-        string birDate,
         string indexed only,
         address indexed creater
      );
@@ -156,53 +163,25 @@ contract LTX_admin is Ownable {
     
     /*创建公司*/
     function setCompanyList(string _name,uint _code,string _site,uint _capital,string _birDate,string _only) public returns(bool) {
-        uint code = companys.push(companyList(_name,_code,_site,_capital,_birDate,_only)) - 1;
-        companyCode[_only] = code;
-        emit createCompany(_name,_code,_site,_capital,_birDate,_only,msg.sender);
+        companyList[_only] = companyModule(_name,_code,_site,_capital,_birDate,_only);
+        emit createCompany(_name, _only,msg.sender);
         return true;
     }
     /*查询公司*/
     function getCompanyList(string _only) view public returns (string,uint,string,uint,string,string) {
         return (
-            companys[companyCode[_only]].name,
-            companys[companyCode[_only]].code,
-            companys[companyCode[_only]].site,
-            companys[companyCode[_only]].capital,
-            companys[companyCode[_only]].birDate,
-            companys[companyCode[_only]].only
+            companyList[_only].name,
+            companyList[_only].code,
+            companyList[_only].site,
+            companyList[_only].capital,
+            companyList[_only].birDate,
+            companyList[_only].only
         );
     }
-    
-    /*转账*/
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balanceOf[msg.sender]);
-        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
-        balanceOf[_to] = balanceOf[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balanceOf[_from]);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-        balanceOf[_to] = balanceOf[_to].add(_value);
-        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-    
-    
-    /*收取手续费kyc*/
-  /*  function payKYC() public returns(bool){
-        uint payCount = 1200 * 10 ** uint256(decimals);
-        return true;
-    }*/
-    
+
     
     /*决议信息录入查询*/
-    struct voteList {
+    struct voteModule {
       string only;
       uint state;
       uint types;
@@ -212,29 +191,26 @@ contract LTX_admin is Ownable {
       uint numbers;
     }
     
-    voteList[] public votes;
-    mapping(string => uint) voteCode;
+    mapping(string => voteModule) private voteList;
     
     event createVote( 
         string indexed only,
-        uint state,
-        uint types,
-        address indexed myAddress,
+        address myAddress,
         address toAddress,
         string content,
-        uint numbers
+        uint indexed numbers
     );
     
     
     /*创建决议*/
     function setVoteList(string _only,uint _state,uint _types,address _myAddress,address _toAddress,string _content,uint _numbers) public returns(bool){
         if(_types == 2){
-            mint(_toAddress,_numbers);
+            _mint(_only, _toAddress,_numbers);
         }else if(_types == 3){
-            transfer(_toAddress,_numbers);
+            _transfer(_only, _toAddress,_numbers);
         }
-        votes.push(voteList(_only,_state,_types,_myAddress,_toAddress,_content,_numbers));
-        emit createVote(_only,_state,_types,_myAddress,_toAddress,_content,_numbers);
+        voteList[_only] = voteModule(_only,_state,_types,_myAddress,_toAddress,_content,_numbers);
+        emit createVote(_only,_myAddress,_toAddress,_content,_numbers);
         return true;
     }
     
@@ -244,7 +220,4 @@ contract LTX_admin is Ownable {
         revert();
     }
 }
-
-
-
 
