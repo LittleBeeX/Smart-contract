@@ -197,7 +197,8 @@ contract user_Token is StandardToken {
         address myAddress,
         uint indexed createTime,
         string indexed content,
-        uint indexed numbers
+        uint indexed numbers,
+        uint codes
     );
     
     function _transfer(address _to, uint256 _value) public {
@@ -214,9 +215,9 @@ contract user_Token is StandardToken {
     function addVoteList(uint _types,address _myAddress,address _toAddress,uint _numbers,string _content) public returns(uint){
         voteList[voteLength] = voteModule(0 ,_types,_myAddress,_toAddress,_content,_numbers,0,0,now);
         voteList[voteLength].userIsVote[msg.sender] = true;
-        voteLength ++;
-        emit createVote(_myAddress,now,_content,_numbers);
-        return voteLength --;
+        emit createVote(_myAddress,now,_content,_numbers, voteLength);
+        voteLength = voteLength.add(1);
+        return voteLength;
     }
     
     function setVoteList(uint code,bool _isVote) public returns(bool){
