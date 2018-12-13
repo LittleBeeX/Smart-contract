@@ -32,31 +32,31 @@ contract LTX_admin is Ownable {
     /*公司信息录入查询*/
     struct companyModule {
       string name;
-      uint code;
+      string code;
       string site;
       uint capital;
       string birDate;
       string only;
-      address tokenAddress;
+      string tokenAddress;
     }
     
     mapping(string => companyModule) private companyList;
     
     event createCompany( 
-        address indexed tokenAddress,
+        string indexed tokenAddress,
         string indexed only,
         address indexed creater
      );
     
     
     /*创建公司*/
-    function setCompanyList(string _name,uint _code,string _site,uint _capital,string _birDate,string _only,address _tokenAddress) onlyOwner public returns(bool) {
+    function setCompanyList(string _name,string _code,string _site,uint _capital,string _birDate,string _only,string _tokenAddress) onlyOwner public returns(bool) {
         companyList[_only] = companyModule(_name,_code,_site,_capital,_birDate,_only,_tokenAddress);
         emit createCompany(_tokenAddress, _only,msg.sender);
         return true;
     }
     /*查询公司*/
-    function getCompanyList(string _only) view public returns (string,uint,string,uint,string,string,address) {
+    function getCompanyList(string _only) view public returns (string,string,string,uint,string,string,string) {
         return (
             companyList[_only].name,
             companyList[_only].code,
@@ -68,7 +68,7 @@ contract LTX_admin is Ownable {
         );
     }
     /*查询公司token地址*/
-     function getCompanyAddress(string _only) view public returns (address) {
+     function getCompanyAddress(string _only) view public returns (string) {
         return (
             companyList[_only].tokenAddress
         );

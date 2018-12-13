@@ -147,13 +147,7 @@ contract user_Token is StandardToken {
     uint8 quorum;
     uint8 duration = 24;
     
-  //  constructor(address tokens) public {
-       /* totalSupply_ = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
-        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);*/
-        
-    //}
-    function initialization(string _name,string _symbol,uint256 _totalSupply,uint8 _support, uint8 _quorum, uint8 _duration) onlyOwner public returns (bool){
+    constructor(string _name,string _symbol,uint256 _totalSupply,uint8 _support, uint8 _quorum, uint8 _duration) public {
         name = _name; 
         symbol = _symbol;  
         totalSupply = _totalSupply * (10 ** uint256(decimals));
@@ -162,7 +156,6 @@ contract user_Token is StandardToken {
         duration = _duration;
         balances[msg.sender] = balances[msg.sender].add(totalSupply);
         frozenAccount[msg.sender] = true;
-        return true;
     }
       
     function mint(address _to, uint256 _amount) public returns (bool) {
