@@ -50,7 +50,7 @@ contract LTX_admin is Ownable {
     
     
     /*创建公司*/
-    function setCompanyList(string _name,string _code,string _site,uint _capital,string _birDate,string _only,string _tokenAddress) onlyOwner public returns(bool) {
+    function setCompanyList(string _name,string _code,string _site,uint _capital,string _birDate,string _only,string _tokenAddress) public returns(bool) {
         companyList[_only] = companyModule(_name,_code,_site,_capital,_birDate,_only,_tokenAddress);
         emit createCompany(_tokenAddress, _only,msg.sender);
         return true;
